@@ -34,7 +34,7 @@ int main(int n, char **v) {
 	while (running) {
 		if (poll(&server.fds[0], server.fds.size(), -1) == -1) /* poll examina un set de fds y espera que haya habido algun evento en concreto o, en este caso, que ninguno de los fds de sockets que tiene almacenados haya tenido algun tipo de error */
 			error("poll error");
-		if (server.fds[0].revents == POLLIN) { /* En este caso como configuramos el server con el constructor para que una vez creado espere que le lleguen datos al socket, entrará en la condición */
+		if (server.fds[0].revents == POLLIN) { /* En este caso como configuramos el server con el constructor para que una vez creado espere que le lleguen datos al socket, entrará en la condición cuando note que le intenta llegar info */
 			int sock = accept(fd, 0, 0); /* Accept espera a que le llegue un intento de conexion desde otro socket al servidor y crea un nuevo fd que apunta a la conexion */
 			if (!sock)
 				error("accept error");
