@@ -27,9 +27,9 @@ int main(int n, char **v) {
 	int fd = socket(AF_INET, SOCK_STREAM, 0); /* Se crea el socket. AF_INET = IPv4, SOCK_STREAM = TCP/IP, el 0 viene con el protocolo de transmision (si fuese UDP sería otro. Cual? Ni idea) */
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 	Server server(fd, atoi(v[1])); /* Se crea el servidor que recibe el fd del socket y el puerto en el que corre para rellenar la estructura */
-	if (bind(fd, (struct sockaddr *)&server.saddr, sizeof(server.saddr)) == -1)
+	if (bind(fd, (struct sockaddr *)&server.saddr, sizeof(server.saddr)) == -1) /* Bind le asigna esa direccion con los datos que hemos definido al socket creado */
 		error("bind error");
-	if (listen(fd, INT_MAX) == -1)
+	if (listen(fd, INT_MAX) == -1) /* Espera conexiones al socket creado y con un limite de cola (puesto a INT_MAX porque me apetece) */
 		error("listen error");
 	while (running) {
 		if (poll(&server.fds[0], server.fds.size(), -1) == -1) /* poll examina un set de fds y espera que haya habido algun evento en concreto o, en este caso, que ninguno de los fds de sockets que tiene almacenados haya tenido algun tipo de error */
