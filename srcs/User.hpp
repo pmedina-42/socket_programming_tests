@@ -18,7 +18,8 @@ class User {
 		int getFd() { return fd; }
 		string getNickName() { return nickName; }
 		void setNewNick(string nick) { nickName = nick; }
-		bool hasLeft() { return belongs; }
+		void add() { belongs = true; }
+		bool stillThere() { return belongs; }
 		void leave() {
 			belongs = false;
 			close(fd);

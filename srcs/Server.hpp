@@ -14,14 +14,14 @@ class Server {
 		Server(int fd, int port) {
 			saddr.sin_family = AF_INET;
 			saddr.sin_port = htons(port);
-			saddr.sin_addr.s_addr = INADDR_ANY; // en vez de pasarle una ip le pasas todas
+			saddr.sin_addr.s_addr = INADDR_ANY; 
 			fds.push_back(pollfd());
 			fds.back().fd = fd;
 			fds.back().events = POLLIN;
 		}
 		~Server() {
 			for (int i = 0; i != fds.size(); i++)
-			close(fds[i].fd);
+				close(fds[i].fd);
 		}
 
 		std::vector<User *> getUsers() { return users; }
