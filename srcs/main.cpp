@@ -11,7 +11,10 @@ void error(string msg) {
 	exit(1);
 }
 
-bool hasUsers(Server *server) { /* Recorre el vector<Users *> y a la que pilla uno que sigue perteneciendo al servidor devuelve true para que siga corriendo */
+/* Recorre el vector<Users *> y a la que pilla uno que sigue perteneciendo al
+ * servidor devuelve true para que siga corriendo
+ */
+bool hasUsers(Server *server) {
 	for (size_t i = 0; i != server->getUsers().size(); i++) {
 		if (server->getUsers()[i]->stillThere())
 			return true;
@@ -24,42 +27,66 @@ int main(int n, char **v) {
 	if (n != 2)
 		error("bad arguments");
 	int opt = 1;
-	int fd = socket(AF_INET, SOCK_STREAM, 0); /* Se crea el socket. AF_INET = IPv4, SOCK_STREAM = TCP/IP, el 0 viene con el protocolo de transmision (si fuese UDP sería otro. Cual? Ni idea) */
+	/* Se crea el socket. AF_INET = IPv4, SOCK_STREAM = TCP/IP, el 0 viene con
+	 * el protocolo de transmision (si fuese UDP sería otro. Cual? Ni idea) */
+	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-	Server server(fd, atoi(v[1])); /* Se crea el servidor que recibe el fd del socket y el puerto en el que corre para rellenar la estructura */
-	if (bind(fd, (struct sockaddr *)&server.saddr, sizeof(server.saddr)) == -1) /* Bind le asigna esa direccion con los datos que hemos definido al socket creado */
+	/* Se crea el servidor que recibe el fd del socket y el puerto en el que
+	 * corre para rellenar la estructura */
+	Server server(fd, atoi(v[1]));
+	/* Bind le asigna esa direccion con los datos que hemos definido al socket creado */
+	if (bind(fd, (struct sockaddr *)&server.saddr, sizeof(server.saddr)) == -1)
 		error("bind error");
-	if (listen(fd, INT_MAX) == -1) /* Espera conexiones al socket creado y con un limite de cola (puesto a INT_MAX porque me apetece) */
+	/* Espera conexiones al socket creado y con un limite de cola (puesto a INT_MAX porque me apetece) */
+	if (listen(fd, INT_MAX) == -1) 
 		error("listen error");
 	while (running) {
-		if (poll(&server.fds[0], server.fds.size(), -1) == -1) /* poll examina un set de fds y espera que haya habido algun evento en concreto o, en este caso, que ninguno de los fds de sockets que tiene almacenados haya tenido algun tipo de error */
+		/* poll examina un set de fds y espera que haya habido algun evento en concreto o, en este caso,
+		 * que ninguno de los fds de sockets que tiene almacenados haya tenido algun tipo de error */
+		if (poll(&server.fds[0], server.fds.size(), -1) == -1)
 			error("poll error");
-		if (server.fds[0].revents == POLLIN) { /* En este caso como configuramos el server con el constructor para que una vez creado espere que le lleguen datos al socket, entrará en la condición cuando note que le intenta llegar info */
-			int sock = accept(fd, 0, 0); /* Accept espera a que le llegue un intento de conexion desde otro socket al servidor y crea un nuevo fd que apunta a la conexion */
+		/* En este caso como configuramos el server con el constructor para que una vez creado espere que
+		 * le lleguen datos al socket, entrará en la condición cuando note que le intenta llegar info */
+		if (server.fds[0].revents == POLLIN) {
+			/* Accept espera a que le llegue un intento de conexion desde otro socket al servidor y
+			 * crea un nuevo fd que apunta a la conexion */
+			int sock = accept(fd, 0, 0);
 			if (!sock)
 				error("accept error");
 			char name[10];
-			recv(sock, &name, sizeof(name), 0); /* Recibe el nickname que le hemos mandado desde el cliente para crear un nuevo usuario */
-			User *newUser = new User(sock, name); /* El usuario se crea con el fd de la nueva conexion y con el nickname recibido */
-			newUser->add(); /* belongs=true */
-			server.users.push_back(newUser); /* Se añade el nuevo usuario al vector del servidor que los almacena */
+			/* Recibe el nickname que le hemos mandado desde el cliente para crear un nuevo usuario */
+			recv(sock, &name, sizeof(name), 0);
+			/* El usuario se crea con el fd de la nueva conexion y con el nickname recibido */
+			User *newUser = new User(sock, name);
+			/* belongs=true */
+			newUser->add();
+			/* Se añade el nuevo usuario al vector del servidor que los almacena */
+			server.users.push_back(newUser);
 			cout << "new connection: " << newUser->getNickName() << endl;
-			memset(name, '\0', 9); /* Nombre a \0 para cuando reciba el siguiente */
-			server.fds.push_back(pollfd()); /* Se le añade un nuevo fd al servidor que apunta a la nueva conexion creada y se pone ese fd a la espera de datos */
+			/* Nombre a \0 para cuando reciba el siguiente */
+			memset(name, '\0', 9);
+			/* Se le añade un nuevo fd al servidor que apunta a la nueva conexion
+			 * creada y se pone ese fd a la espera de datos */
+			server.fds.push_back(pollfd());
 			server.fds.back().fd = sock;
 			server.fds.back().events = POLLIN;
 		} else {
 			for (vector<pollfd>::iterator it = server.fds.begin(); it != server.fds.end(); it++) {
-				if ((*it).revents == POLLIN) { /* Si le estan llegando datos de uno de los fds que tiene almacenados lo procesa */
+				/* Si le estan llegando datos de uno de los fds que tiene almacenados lo procesa */
+				if ((*it).revents == POLLIN) {
 					int index;
-					for (int i = 0; i != server.getUsers().size(); i++) { /* Se comprueba de quien es el mensaje que esta llegando para mandarselo al resto de clientes y que el mensaje venga asignado a la persona */
+					/* Se comprueba de quien es el mensaje que esta llegando para
+					 * mandarselo al resto de clientes y que el mensaje venga asignado a la persona */
+					for (int i = 0; i != server.getUsers().size(); i++) {
 						if (server.getUsers()[i]->getFd() == (*it).fd)
 							index = i;
 					}
 					char input[256];
 					recv((*it).fd, &input, sizeof(input), 0);
 					string output;
-					if (!strcmp(input, "exit")) { /* Si el mensaje recibido es exit, pone belongs=false del usuario que lo ha enviado y el output que recibiran el resto de usuarios será el de "tal usuario ha abandonado el chat"*/
+					/* Si el mensaje recibido es exit, pone belongs=false del usuario que lo ha enviado y
+					 * el output que recibiran el resto de usuarios será el de "tal usuario ha abandonado el chat"*/
+					if (!strcmp(input, "exit")) {
 						server.getUsers()[index]->leave();
 						output = server.getUsers()[index]->getNickName() + " has left the chat\n";
 					} else { /* Si no, el output que reciban el resto de clientes será el mensaje enviado */
