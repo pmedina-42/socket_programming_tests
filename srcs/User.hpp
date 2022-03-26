@@ -2,6 +2,8 @@
 #define USER_H
 
 #include <unistd.h>
+#include <string.h>
+#include <string>
 
 using namespace std;
 

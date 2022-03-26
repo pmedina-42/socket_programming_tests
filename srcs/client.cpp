@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <signal.h>
+#include <string.h>
 
 bool running = true;
 

@@ -1,6 +1,11 @@
 #include <iostream>
 #include "Server.hpp"
 #include <poll.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define NAME_MAX_SZ 10
 
 bool running = true;
 
@@ -47,13 +52,17 @@ int main(int n, char **v) {
 			error("poll error");
 		/* En este caso como configuramos el server con el constructor para que una vez creado espere que
 		 * le lleguen datos al socket, entrará en la condición cuando note que le intenta llegar info */
+		
+		/* Este primer condicional es para recibir nuevos usuarios. server.fds[0] es el
+		 * socket que escucha nuevas conexiones, las ya establecidas tienen valores de server.fds[]
+		 * mayores que 0. */
 		if (server.fds[0].revents == POLLIN) {
 			/* Accept espera a que le llegue un intento de conexion desde otro socket al servidor y
-			 * crea un nuevo fd que apunta a la conexion */
+			 * crea un nuevo fd que apunta a la conexion. Esta funcion hangea el programa (true bucle). */
 			int sock = accept(fd, 0, 0);
 			if (!sock)
 				error("accept error");
-			char name[10];
+			char name[NAME_MAX_SZ];
 			/* Recibe el nickname que le hemos mandado desde el cliente para crear un nuevo usuario */
 			recv(sock, &name, sizeof(name), 0);
 			/* El usuario se crea con el fd de la nueva conexion y con el nickname recibido */
@@ -70,6 +79,9 @@ int main(int n, char **v) {
 			server.fds.push_back(pollfd());
 			server.fds.back().fd = sock;
 			server.fds.back().events = POLLIN;
+		
+		/* si no hay conexiones nuevas, checkea si hay datos a leer por aprte de los
+		 * usuarios almacenados. */
 		} else {
 			for (vector<pollfd>::iterator it = server.fds.begin(); it != server.fds.end(); it++) {
 				/* Si le estan llegando datos de uno de los fds que tiene almacenados lo procesa */
@@ -89,15 +101,18 @@ int main(int n, char **v) {
 					if (!strcmp(input, "exit")) {
 						server.getUsers()[index]->leave();
 						output = server.getUsers()[index]->getNickName() + " has left the chat\n";
-					} else { /* Si no, el output que reciban el resto de clientes será el mensaje enviado */
+					/* Si no, el output que reciban el resto de clientes será el mensaje enviado */
+					} else {
 						output = server.getUsers()[index]->getNickName() + ": " + input + "\n";
 					}
 					for (int i = 0; i != server.getUsers().size(); i++) {
-						if (i != index) /* El mensaje no se envía al usuario que lo ha mandado */
+						/* El mensaje no se envía al usuario que lo ha mandado */
+						if (i != index)
 							send(server.getUsers()[i]->getFd(), output.c_str(), output.length(), 0);
 					}
-					memset(input, '\0', 255); /* Pone el input a 0 para recibir el siguiente */
-				}
+					/* Pone el input a 0 para recibir el siguiente */
+					memset(input, '\0', 255);
+				}	
 			}
 		}
 		if (!hasUsers(&server)) { /* A la que el server deje de tener usuarios deja de correr */

@@ -14,7 +14,7 @@ class Server {
 		Server(int fd, int port) {
 			saddr.sin_family = AF_INET;
 			saddr.sin_port = htons(port);
-			saddr.sin_addr.s_addr = INADDR_ANY; 
+			saddr.sin_addr.s_addr = INADDR_ANY;
 			fds.push_back(pollfd());
 			fds.back().fd = fd;
 			fds.back().events = POLLIN;

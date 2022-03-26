@@ -14,7 +14,7 @@ SNAME	=	server
 SSRC	=	srcs/main.cpp
 CNAME	=	client
 CSRC	=	srcs/client.cpp
-CXX		=	clang++
+CXX		=	g++ -fsanitize=address -g3
 RM		=	rm -f
 
 NAME:
