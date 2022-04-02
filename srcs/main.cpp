@@ -66,7 +66,7 @@ int main(int n, char **v) {
 			/* Recibe el nickname que le hemos mandado desde el cliente para crear un nuevo usuario */
 			recv(sock, &name, sizeof(name), 0);
 			/* El usuario se crea con el fd de la nueva conexion y con el nickname recibido */
-			User *newUser = new User(sock, name);
+			User *newUser = new User(sock, name, 4);
 			/* belongs=true */
 			newUser->add();
 			/* Se añade el nuevo usuario al vector del servidor que los almacena */

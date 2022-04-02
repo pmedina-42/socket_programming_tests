@@ -15,6 +15,13 @@ class User {
 
 	public:
 		User(int fd, string nick) : nickName(nick), belongs(false), fd(fd) {}
+		User(int fd, char* data, size_t len)
+		:
+			nickName(data, len),
+			belongs(false),
+			fd(fd)
+		{}
+		
 		~User() {}
 
 		int getFd() { return fd; }
