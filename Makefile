@@ -10,17 +10,25 @@
 #                                                                              #
 # **************************************************************************** #
 
-SNAME	=	server
-SSRC	=	srcs/main.cpp
-CNAME	=	client
-CSRC	=	srcs/client.cpp
-CXX		=	g++ -fsanitize=address -g3
-RM		=	rm -f
+SNAME = server
+SSRC = srcs/main.cpp
+CNAME = client
+CSRC = srcs/client.cpp
+CXX = g++
+RM = rm -f
+SOBJS = $(SSRC:.cpp=.o)
+COBJS = $(CSRC:.cpp=.o)
 
-NAME:
-	@$(CXX) $(SSRC) -o $(SNAME)
-	@$(CXX) $(CSRC) -o $(CNAME)
+%.o: %.cpp
+	$(CXX) -c $< -o $@
+
+all: $(SNAME) $(CNAME)
+
+$(SNAME): $(SOBJS)
+	$(CXX) $(SOBJS) -o $(SNAME)
+
+$(CNAME): $(COBJS)
+	$(CXX) $(COBJS) -o $(CNAME)
 
 clean:
-	@$(RM) $(SNAME) $(CNAME)
-	
+	@$(RM) $(SNAME) $(CNAME) $(SOBJS) $(COBJS)	
